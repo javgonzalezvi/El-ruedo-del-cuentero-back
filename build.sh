@@ -12,11 +12,10 @@ python manage.py migrate
 python manage.py shell -c "
 from usuarios.models import Usuario
 import os
-
-correo    = os.environ.get('javgonzalezvi@unal.edu.co')
-password  = os.environ.get('Leviatan.2609*')
-nombres   = os.environ.get('Javier Esteban', 'Admin')
-apellidos = os.environ.get('Gonzalez Vivas', 'Ruedo')
+correo    = os.environ.get('SUPERUSER_EMAIL')
+password  = os.environ.get('SUPERUSER_PASSWORD')
+nombres   = os.environ.get('SUPERUSER_NOMBRES', 'Admin')
+apellidos = os.environ.get('SUPERUSER_APELLIDOS', 'Ruedo')
 if correo and password and not Usuario.objects.filter(correo=correo).exists():
     Usuario.objects.create_superuser(correo=correo, password=password, nombres=nombres, apellidos=apellidos)
     print('Superusuario creado:', correo)
