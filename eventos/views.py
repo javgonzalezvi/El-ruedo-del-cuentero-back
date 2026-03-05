@@ -1,48 +1,22 @@
-"""eventos/views.py"""
-
-from rest_framework import viewsets, filters, permissions
+from rest_framework import viewsets, permissions, filters
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Evento, Categoria
-from .serializers import EventoSerializer, EventoResumenSerializer, CategoriaSerializer
-from usuarios.permissions import EsCuenteroOAdmin, EsPropietarioOCuentero
+from .models import Evento, Categoria, FechaEvento
+from .serializers import EventoSerializer, EventoResumenSerializer, CategoriaSerializer, FechaEventoSerializer
+from usuarios.permissions import EsCuenteroOAdmin
 
 
 class CategoriaViewSet(viewsets.ModelViewSet):
-    """
-    GET    /api/eventos/categorias/       → listar
-    POST   /api/eventos/categorias/       → crear (solo Cuentero/Admin)
-    GET    /api/eventos/categorias/<id>/  → detalle
-    PUT    /api/eventos/categorias/<id>/  → editar
-    DELETE /api/eventos/categorias/<id>/  → eliminar
-    """
-    queryset           = Categoria.objects.all()
-    serializer_class   = CategoriaSerializer
-    permission_classes = [EsCuenteroOAdmin]
-    lookup_field       = "slug"
+    queryset         = Categoria.objects.all()
+    serializer_class = CategoriaSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 
 class EventoViewSet(viewsets.ModelViewSet):
-    """
-    GET    /api/eventos/           → listar (público)
-    POST   /api/eventos/           → crear (solo Cuentero/Admin)
-    GET    /api/eventos/<id>/      → detalle (público)
-    PUT    /api/eventos/<id>/      → editar (solo creador o Admin)
-    DELETE /api/eventos/<id>/      → eliminar (solo creador o Admin)
-
-    Filtros disponibles:
-        ?categoria=<slug>
-        ?ciudad=<nombre>
-        ?destacado=true
-        ?abierto=true
-        ?search=<texto>   → busca en título y descripción
-        ?ordering=fecha   → ordenar por fecha
-    """
-    queryset = Evento.objects.select_related("categoria", "creado_por").all()
+    queryset = Evento.objects.select_related("categoria").prefetch_related("fechas_adicionales").all()
     filter_backends  = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ["ciudad", "destacado", "abierto", "gratuito"]
+    filterset_fields = ["ciudad", "destacado", "abierto", "categoria", "recurrencia"]
     search_fields    = ["titulo", "descripcion", "lugar"]
     ordering_fields  = ["fecha", "creado_en"]
-    ordering         = ["fecha"]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -50,12 +24,34 @@ class EventoViewSet(viewsets.ModelViewSet):
         return EventoSerializer
 
     def get_permissions(self):
-        if self.action in ["list", "retrieve"]:
-            return [permissions.AllowAny()]
-        if self.action == "create":
+        if self.action in ["create", "update", "partial_update", "destroy"]:
             return [EsCuenteroOAdmin()]
-        # update, partial_update, destroy
-        return [permissions.IsAuthenticated(), EsPropietarioOCuentero()]
+        return [permissions.AllowAny()]
 
     def perform_create(self, serializer):
-        serializer.save(creado_por=self.request.user)
+        evento = serializer.save(creado_por=self.request.user)
+        # Guardar fechas adicionales si vienen en el request
+        fechas = self.request.data.get("fechas_adicionales", [])
+        if isinstance(fechas, str):
+            import json
+            try:
+                fechas = json.loads(fechas)
+            except Exception:
+                fechas = []
+        for f in fechas:
+            FechaEvento.objects.create(
+                evento=evento,
+                fecha=f.get("fecha"),
+                nota=f.get("nota", ""),
+            )
+
+
+class FechaEventoViewSet(viewsets.ModelViewSet):
+    serializer_class   = FechaEventoSerializer
+    permission_classes = [EsCuenteroOAdmin]
+
+    def get_queryset(self):
+        return FechaEvento.objects.filter(evento_id=self.kwargs["evento_pk"])
+
+    def perform_create(self, serializer):
+        serializer.save(evento_id=self.kwargs["evento_pk"])
