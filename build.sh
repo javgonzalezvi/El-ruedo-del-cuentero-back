@@ -21,4 +21,6 @@ if correo and password and not Usuario.objects.filter(correo=correo).exists():
     print('Superusuario creado:', correo)
 else:
     print('Superusuario ya existe o variables no definidas.')
+
+print('CLOUD:', os.environ.get('CLOUDINARY_CLOUD_NAME', 'NO ENCONTRADO'))
 "
