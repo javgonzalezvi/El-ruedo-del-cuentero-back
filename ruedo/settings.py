@@ -146,8 +146,7 @@ CORS_ALLOW_CREDENTIALS = True
 STATIC_URL  = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# WhiteNoise comprime y cachea los estáticos automáticamente
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# WhiteNoise — en producción se configura en STORAGES si hay Cloudinary
 
 # ── Cloudinary (media: imágenes y videos) ─────────────────────────────────
 CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
@@ -162,7 +161,15 @@ if CLOUDINARY_CLOUD_NAME:
         api_secret = CLOUDINARY_API_SECRET,
         secure     = True,
     )
-    DEFAULT_FILE_STORAGE = "ruedo.storage.CloudinaryStorage"
+    # Django 6 usa STORAGES en lugar de DEFAULT_FILE_STORAGE
+    STORAGES = {
+        "default": {
+            "BACKEND": "ruedo.storage.CloudinaryStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 
 MEDIA_URL  = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
