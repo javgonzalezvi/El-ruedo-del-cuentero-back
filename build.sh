@@ -11,6 +11,7 @@ python manage.py migrate
 # Crear superusuario si no existe (usa variables de entorno de Render)
 python manage.py shell -c "
 from usuarios.models import Usuario
+from django.core.files.storage import default_storage
 import os
 correo    = os.environ.get('SUPERUSER_EMAIL')
 password  = os.environ.get('SUPERUSER_PASSWORD')
@@ -23,4 +24,5 @@ else:
     print('Superusuario ya existe o variables no definidas.')
 
 print('CLOUD:', os.environ.get('CLOUDINARY_CLOUD_NAME', 'NO ENCONTRADO'))
+print('STORAGE:', default_storage.__class__)
 "
