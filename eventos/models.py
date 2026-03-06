@@ -4,9 +4,13 @@ import uuid
 
 
 def imagen_evento_path(instance, filename):
-    
     ext = filename.rsplit(".", 1)[-1] if "." in filename else "jpg"
     return f"eventos/{uuid.uuid4().hex}.{ext}"
+
+
+def video_evento_path(instance, filename):
+    ext = filename.rsplit(".", 1)[-1] if "." in filename else "mp4"
+    return f"eventos/videos/{uuid.uuid4().hex}.{ext}"
 
 
 class Categoria(models.Model):
@@ -39,7 +43,11 @@ class Evento(models.Model):
     )
     imagen     = models.ImageField(upload_to=imagen_evento_path, null=True, blank=True)
     imagen_url = models.URLField(blank=True)
-    video_url  = models.URLField(blank=True)
+    video      = models.FileField(
+        upload_to=video_evento_path, null=True, blank=True,
+        help_text="Archivo de video (sube a Cloudinary automáticamente)",
+    )
+    video_url  = models.URLField(blank=True, help_text="URL externa de video (YouTube, Vimeo, etc.)")
 
     fecha         = models.DateTimeField()
     lugar         = models.CharField(max_length=200)
@@ -75,7 +83,13 @@ class Evento(models.Model):
     def imagen_final(self):
         if self.imagen:
             return self.imagen.url
-        return self.imagen_url or self.video_url or None
+        return self.imagen_url or None
+
+    @property
+    def video_final(self):
+        if self.video:
+            return self.video.url
+        return self.video_url or None
 
 
 class FechaEvento(models.Model):
@@ -90,3 +104,4 @@ class FechaEvento(models.Model):
 
     def __str__(self):
         return f"{self.evento.titulo} — {self.fecha.strftime('%d/%m/%Y %H:%M')}"
+    

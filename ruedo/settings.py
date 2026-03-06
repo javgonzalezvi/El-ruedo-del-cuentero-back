@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     "eventos",
     "noticias",
     "entrevistas",
+    "cloudinary",
+    "cloudinary_storage",
 ]
 
 MIDDLEWARE = [
@@ -142,15 +144,27 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 CORS_ALLOW_CREDENTIALS = True
 
 
-# ── Archivos estáticos y media ─────────────────────────────────────────────
+# ── Archivos estáticos ────────────────────────────────────────────────────
 STATIC_URL  = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # WhiteNoise comprime y cachea los estáticos automáticamente
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-MEDIA_URL  = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+# ── Cloudinary (media: imágenes y videos) ─────────────────────────────────
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
+    "API_KEY":    os.getenv("CLOUDINARY_API_KEY"),
+    "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
+}
+
+# Si hay credenciales de Cloudinary usar Cloudinary, si no usar carpeta media/ local
+if os.getenv("CLOUDINARY_CLOUD_NAME"):
+    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+    MEDIA_URL = "/media/"   # Cloudinary Storage genera las URLs correctas internamente
+else:
+    MEDIA_URL  = "/media/"
+    MEDIA_ROOT = BASE_DIR / "media"
 
 
 # ── Internacionalización ───────────────────────────────────────────────────
