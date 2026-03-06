@@ -41,10 +41,10 @@ class Evento(models.Model):
         Categoria, on_delete=models.SET_NULL,
         null=True, blank=True, related_name="eventos",
     )
-    imagen     = models.ImageField(upload_to=imagen_evento_path, null=True, blank=True)
+    imagen     = models.ImageField(upload_to=imagen_evento_path, null=True, blank=True, max_length=500)
     imagen_url = models.URLField(blank=True)
     video      = models.FileField(
-        upload_to=video_evento_path, null=True, blank=True,
+        upload_to=video_evento_path, null=True, blank=True, max_length=500,
         help_text="Archivo de video (sube a Cloudinary automáticamente)",
     )
     video_url  = models.URLField(blank=True, help_text="URL externa de video (YouTube, Vimeo, etc.)")
@@ -104,4 +104,3 @@ class FechaEvento(models.Model):
 
     def __str__(self):
         return f"{self.evento.titulo} — {self.fecha.strftime('%d/%m/%Y %H:%M')}"
-    

@@ -41,8 +41,6 @@ INSTALLED_APPS = [
     "eventos",
     "noticias",
     "entrevistas",
-    "cloudinary",
-    "cloudinary_storage",
 ]
 
 MIDDLEWARE = [
@@ -152,19 +150,22 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # ── Cloudinary (media: imágenes y videos) ─────────────────────────────────
-CLOUDINARY_STORAGE = {
-    "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
-    "API_KEY":    os.getenv("CLOUDINARY_API_KEY"),
-    "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
-}
+CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
+CLOUDINARY_API_KEY    = os.getenv("CLOUDINARY_API_KEY")
+CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
 
-# Si hay credenciales de Cloudinary usar Cloudinary, si no usar carpeta media/ local
-if os.getenv("CLOUDINARY_CLOUD_NAME"):
-    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
-    MEDIA_URL = "/media/"   # Cloudinary Storage genera las URLs correctas internamente
-else:
-    MEDIA_URL  = "/media/"
-    MEDIA_ROOT = BASE_DIR / "media"
+if CLOUDINARY_CLOUD_NAME:
+    import cloudinary
+    cloudinary.config(
+        cloud_name = CLOUDINARY_CLOUD_NAME,
+        api_key    = CLOUDINARY_API_KEY,
+        api_secret = CLOUDINARY_API_SECRET,
+        secure     = True,
+    )
+    DEFAULT_FILE_STORAGE = "ruedo.storage.CloudinaryStorage"
+
+MEDIA_URL  = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 
 # ── Internacionalización ───────────────────────────────────────────────────
